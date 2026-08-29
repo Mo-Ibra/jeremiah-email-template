@@ -1,9 +1,10 @@
-import Link from "next/link";
-import { metrics, listRequests } from "@/lib/db/queries";
-import { getSessionFromRequest } from "@/lib/auth/session";
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSessionFromRequest } from "@/lib/auth/session";
+import { listRequests, type ListFilters } from "@/lib/db/queries";
+import { RequestFilters } from "@/components/dashboard/RequestFilters";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -13,8 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Star, MessageSquare, Send, ArrowRight } from "lucide-react";
-import { TestEmailForm } from "@/components/dashboard/TestEmailForm";
+import { Button } from "@/components/ui/button";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -49,117 +50,69 @@ const statusStyles: Record<string, string> = {
     "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
 };
 
-export default async function DashboardOverview() {
+export default async function RequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; search?: string; page?: string }>;
+}) {
   const businessId = await getBusinessId();
   if (!businessId) redirect("/dashboard/login");
 
-  const [m, recent] = await Promise.all([
-    metrics(businessId),
-    listRequests(businessId, { perPage: 10, sort: "newest" }),
-  ]);
+  const params = await searchParams;
+  const filters: ListFilters = { perPage: 20, sort: "newest" };
+
+  if (
+    params.status === "pending" ||
+    params.status === "rated" ||
+    params.status === "completed"
+  ) {
+    filters.status = params.status;
+  }
+  if (params.search) filters.search = params.search;
+  if (params.page) filters.page = Number(params.page) || 1;
+
+  const result = await listRequests(businessId, filters);
+  const totalPages = Math.ceil(result.total / result.perPage);
+
+  function pageUrl(p: number) {
+    const sp = new URLSearchParams();
+    if (params.status) sp.set("status", params.status);
+    if (params.search) sp.set("search", params.search);
+    sp.set("page", String(p));
+    return `/dashboard/requests?${sp.toString()}`;
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Review Requests</h1>
         <p className="text-muted-foreground text-sm">
-          Your review system at a glance.
+          {result.total} total request{result.total !== 1 ? "s" : ""}
         </p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Requests
-            </CardTitle>
-            <Send className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{m.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg Rating
-            </CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {m.avgRating ? `${m.avgRating}` : "—"}
-              {m.avgRating && (
-                <span className="text-sm font-normal text-muted-foreground ml-1">
-                  / 5
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Feedback
-            </CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{m.feedbackSubmitted}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Response Rate
-            </CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{m.responseRate}%</div>
-          </CardContent>
-        </Card>
-      </div>
+      <RequestFilters />
 
-      {/* Test email */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Send test email</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TestEmailForm />
-        </CardContent>
-      </Card>
-
-      {/* Recent requests */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Recent requests</CardTitle>
-          <Link
-            href="/dashboard/requests"
-            className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-          >
-            View all <ArrowRight className="h-3 w-3" />
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {recent.rows.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8 text-sm">
-              No requests yet. Send a test email above to get started.
+        <CardContent className="p-0">
+          {result.rows.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12 text-sm">
+              No requests found.
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Order</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Date</TableHead>
+                  <TableHead className="w-[60px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recent.rows.map((r) => {
+                {result.rows.map((r) => {
                   const status = getStatus(r);
                   return (
                     <TableRow key={r.id}>
@@ -172,6 +125,9 @@ export default async function DashboardOverview() {
                             {r.customerEmail}
                           </p>
                         </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.externalOrderId}
                       </TableCell>
                       <TableCell>
                         {r.rating ? (
@@ -198,6 +154,13 @@ export default async function DashboardOverview() {
                       <TableCell className="text-right text-sm text-muted-foreground">
                         {new Date(r.createdAt).toLocaleDateString()}
                       </TableCell>
+                      <TableCell>
+                        <Link href={`/dashboard/requests/${r.id}`}>
+                          <Button variant="ghost" size="sm">
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -206,6 +169,43 @@ export default async function DashboardOverview() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Page {result.page} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={result.page <= 1}
+            >
+              {result.page > 1 ? (
+                <Link href={pageUrl(result.page - 1)} className="flex items-center">
+                  <ChevronLeft className="h-4 w-4" />
+                </Link>
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={result.page >= totalPages}
+            >
+              {result.page < totalPages ? (
+                <Link href={pageUrl(result.page + 1)} className="flex items-center">
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

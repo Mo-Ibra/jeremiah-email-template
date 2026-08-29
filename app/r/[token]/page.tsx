@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { hashToken } from "@/lib/token";
 import { findRequestByTokenHash, recordRating } from "@/lib/db/queries";
 import { StarInput } from "@/components/review/StarInput";
+import { FeedbackForm } from "@/components/review/FeedbackForm";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +51,11 @@ export default async function ReviewPage({
   if (effectiveRating !== null) {
     return (
       <ResultPage
+        token={token}
         customerName={req.customer.name}
         businessName={req.business.name}
         rating={effectiveRating}
+        feedbackSubmitted={req.request.feedbackSubmittedAt !== null}
       />
     );
   }
@@ -93,16 +96,19 @@ function NeutralPage({
 
 // ---------------------------------------------------------------------------
 // Result page (rating recorded / already rated)
-// Phase 7 will add the private feedback form here.
 // ---------------------------------------------------------------------------
 function ResultPage({
+  token,
   customerName,
   businessName,
   rating,
+  feedbackSubmitted,
 }: {
+  token: string;
   customerName: string;
   businessName: string;
   rating: Rating;
+  feedbackSubmitted: boolean;
 }) {
   return (
     <Shell>
@@ -125,9 +131,13 @@ function ResultPage({
           </span>
         ))}
       </div>
-      <p style={{ color: "#71717a", fontSize: "0.875rem" }}>
-        We appreciate your feedback!
-      </p>
+      {feedbackSubmitted ? (
+        <p style={{ color: "#71717a", fontSize: "0.875rem" }}>
+          Thanks for your feedback!
+        </p>
+      ) : (
+        <FeedbackForm token={token} rating={rating} />
+      )}
     </Shell>
   );
 }
