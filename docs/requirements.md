@@ -29,14 +29,14 @@ HTTP API.
   1. Validate the request.
   2. Upsert the customer and order records.
   3. Create a review request with a unique, unguessable token.
-  4. Send the review email via Sender.
+  4. Send the review email via Resend.
   5. Return the review request id and status.
 - Retries of the same request must not create duplicate review requests
   (idempotency, see [api.md](./api.md)).
 
 ### 2.2 Email review request
 
-- Email is sent by our system via Sender (transactional API).
+- Email is sent by our system via Resend (transactional API).
 - The email contains five star ratings as **plain URLs**, no JavaScript:
   `https://reviews.example.com/r/<token>?rating=1..5`
 - The email renders correctly in common email clients (table layout, inline styles).
@@ -91,15 +91,15 @@ Dashboard capabilities:
 | Performance | Rating click → response should be fast (< 300 ms server-side); dashboard queries index-backed |
 | Security | See [security.md](./security.md); tokens must be unguessable, keys hashed at rest |
 | Privacy | Customer emails/names never appear in URLs; only opaque tokens |
-| Availability | Stateless app; Neon serverless pool; Sender as external email service |
+| Availability | Stateless app; Neon serverless pool; Resend as external email service |
 | Maintainability | TypeScript end-to-end, shared Zod schemas, typed queries |
-| Cost | MVP budget: Neon free tier, Sender free/entry tier, Vercel hobby |
+| Cost | MVP budget: Neon free tier, Resend free tier (3k emails/mo), Vercel hobby |
 
 ## 4. Assumptions
 
 - There is a single business to serve for the MVP, but the data model allows multiple
   businesses without schema changes.
-- The business can create a Sender API token and (if desired) enable Sender webhooks.
+- The business can create a Resend API key and (if desired) enable Resend webhooks.
 - The business can provide its Google review deep link (e.g.
   `https://search.google.com/local/writereview?placeid=<PLACE_ID>`) to configure in the dashboard.
 - The existing HTML email template exists and will be ported into the app as a React/template

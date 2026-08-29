@@ -21,10 +21,10 @@ This document describes the system's components and how data flows between them.
 │  - generate token            │
 └──────┬───────────────┬───────┘
        │               │
-       │ insert        │ POST https://api.sender.net/v2/message/send
+       │ insert        │ POST https://api.resend.com/emails
        ▼               ▼
 ┌──────────────┐   ┌──────────────┐
-│ Neon Postgres│   │ Sender       │  transactional email API
+│ Neon Postgres│   │ Resend       │  transactional email API
 └──────┬───────┘   └──────┬───────┘
        │                  │ delivers
        │                  ▼
@@ -71,7 +71,7 @@ This document describes the system's components and how data flows between them.
 - Validates the payload with a shared Zod schema.
 - Performs an idempotent insert (see [database.md](./database.md) and [api.md](./api.md)).
 - Generates the secure review token and stores only its hash.
-- Triggers the Sender email send (fire-and-await, with error handling).
+- Triggers the Resend email send (fire-and-await, with error handling).
 
 ### 2.3 Neon PostgreSQL
 - Single database holding all state: businesses, API keys, customers, orders,
@@ -79,12 +79,12 @@ This document describes the system's components and how data flows between them.
 - Accessed only by our app via `@neondatabase/serverless` connection pool.
 - Provides atomicity for "record rating once" via conditional `UPDATE ... WHERE ... IS NULL`.
 
-### 2.4 Sender (email delivery)
-- Receives `POST https://api.sender.net/v2/message/send` from our app.
+### 2.4 Resend (email delivery)
+- Receives `POST https://api.resend.com/emails` from our app.
 - Delivers the review email to the customer.
-- (Paid feature) Can POST webhooks back to our `app/api/webhooks/sender/route.ts` for
+- Can POST webhooks (free) back to our `app/api/webhooks/resend/route.ts` for
   delivery/bounce events.
-- Open/click tracking is primarily handled by **our** routes (see [sender-integration.md](./sender-integration.md)).
+- Open/click tracking is primarily handled by **our** routes (see [resend-integration.md](./resend-integration.md)).
 
 ### 2.5 Next.js Review Route (customer-facing)
 - `GET /r/[token]` — validates token hash, records rating, renders result page.
@@ -113,7 +113,7 @@ This document describes the system's components and how data flows between them.
    - create `review_requests` with `token_hash`, `expires_at`, idempotency key
      (unique `(business_id, order_id)` makes retries idempotent).
 5. Generate token → build the five star URLs.
-6. Render HTML email (no JS) → `POST /message/send` to Sender.
+6. Render HTML email (no JS) → `POST https://api.resend.com/emails`.
 7. Store `email_sent_at` + `sender_email_id`.
 8. Return `201 { id, status: "created", createdAt }`.
 
@@ -153,7 +153,7 @@ This document describes the system's components and how data flows between them.
 
 - Stateless Next.js app on Vercel (serverless functions). The DB connection pool is
   maintained by Neon.
-- Long-running work is none in MVP: the Sender call is awaited inline. (If timeouts become a
+- Long-running work is none in MVP: the Resend call is awaited inline. (If timeouts become a
   problem, queue the send — see [decisions.md](./decisions.md) §7.)
 - Scheduled cleanup is not needed for MVP (expired tokens are just rejected at read time).
 
@@ -164,12 +164,12 @@ This document describes the system's components and how data flows between them.
 | Business app → Review API | API key (secrets) | Business is identified by the key |
 | Customer browser → Review route | Token (opaque, 256-bit) | Token hash stored; token never in logs |
 | Admin browser → Dashboard | Signed session cookie | Static email/password login, business-scoped |
-| Sender → our webhook (optional) | Signature/secret (if supported) | Verify before accepting events |
+| Resend → our webhook | Svix signature (`RESEND_WEBHOOK_SECRET`) | Verify before accepting events |
 | Our app → Neon | Connection string (DATABASE_URL) | Stored in env only |
 
 ## 6. Deployment topology (recommended)
 
 - **Vercel** — Next.js app (API routes, review routes, dashboard, webhooks).
 - **Neon** — Postgres; single branch (production) for MVP; use preview branches for dev/staging.
-- **Sender** — external; Sender API token stored in env; dashboard for sender config.
+- **Resend** — external; Resend API key stored in env; dashboard for sender config.
 - **Environment variables** — see [development-phases.md](./development-phases.md) Phase 1.

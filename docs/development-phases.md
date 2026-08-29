@@ -1,7 +1,7 @@
 # Development Phases
 
 Implementation roadmap. Build in order; each phase gates the next. Keep everything aligned with
-the other docs: [database](./database.md), [api](./api.md), [sender](./sender-integration.md),
+the other docs: [database](./database.md), [api](./api.md), [resend](./resend-integration.md),
 [review-flow](./review-flow.md), [dashboard](./dashboard.md), [security](./security.md).
 
 **Suggested project structure** (referenced throughout):
@@ -13,19 +13,20 @@ app/
     review-requests/[id]/route.ts        (optional status check)
     reviews/feedback/route.ts
     track/open/route.ts                  (open pixel)
-    webhooks/sender/route.ts             (optional)
+    webhooks/resend/route.ts             (optional)
     dashboard/...                        (metrics, list, detail, keys, settings)
   r/[token]/page.tsx                     (rating + result page)
   g/[token]/route.ts                     (google redirect)
   dashboard/...                          (login, overview, requests, [id], settings)
   layout.tsx, globals.css
 components/
-  email/ReviewEmail.tsx
+  review/... (stars, result, feedback)
   dashboard/... (charts, table, filters)
 lib/
   db/schema.ts, db/index.ts, db/queries.ts, db/seed.ts
   auth/apikey.ts, auth/session.ts
-  sender/client.ts
+  resend/client.ts
+  email/render.ts
   token.ts
   validation.ts
   rate-limit.ts
@@ -175,22 +176,23 @@ connected.
 
 ---
 
-## Phase 5 — Sender email integration
+## Phase 5 — Resend email integration
 
-**Goal:** Review emails are sent through Sender with the no-JS star links.
+**Goal:** Review emails are sent through Resend with the no-JS star links.
 
 **What will be built**
-- `lib/sender/client.ts`: wrapper around `POST /message/send` (Bearer token).
-- `components/email/ReviewEmail.tsx`: HTML template (from the existing template as the design
-  start), plain-text fallback, star links, open pixel.
+- `lib/resend/client.ts`: wrapper around `POST /emails` (Bearer token).
+- `lib/email/render.ts`: HTML template (from the existing template as the design start),
+  plain-text fallback, star links, open pixel.
 - Hook the send into the Phase 4 route: render template, send, persist `sender_email_id` +
-  `email_sent_at`. Guard re-send when `email_sent_at IS NOT NULL`.
-- (Optional) Sender webhook handler + webhook creation (paid). Verify payload; make idempotent.
-  Correlate per [sender-integration.md](./sender-integration.md) §5.
+  `email_sent_at`. Guard re-send when `email_sent_at IS NOT NULL`; regenerate the token on retry
+  when the email was never sent.
+- Resend webhook handler + webhook creation (free). Verify Svix signature; make idempotent.
+  Correlate per [resend-integration.md](./resend-integration.md) §5.
 
 **Files/components likely involved**
-- `lib/sender/client.ts`, `components/email/ReviewEmail.tsx`,
-  `app/api/webhooks/sender/route.ts` (optional)
+- `lib/resend/client.ts`, `lib/email/render.ts`,
+  `app/api/webhooks/resend/route.ts` (optional)
 
 **API/database changes**
 - Writes `email_sent_at`, `sender_email_id`, and (webhook) `email_delivered_at` /
@@ -198,7 +200,7 @@ connected.
 - New webhook endpoint (optional).
 
 **Dependencies**
-- Phase 4, Sender account + API token, verified sender address.
+- Phase 4, Resend account + API key, verified sender address.
 
 **Acceptance criteria**
 - A real email is delivered to a test inbox; stars are clickable plain links in Gmail/Apple
@@ -316,7 +318,7 @@ connected.
 - `GET /g/[token]` Google redirect route: increment `google_review_click_count`, set
   `google_review_clicked_at` on first click, `302` to `google_review_url` (graceful fallback).
 - Make the Google review CTA on the result page point at `/g/{token}`.
-- Wire delivery/bounce columns via Sender webhook (Phase 5 optional) into the timeline.
+- Wire delivery/bounce columns via Resend webhook (Phase 5 optional) into the timeline.
 - Finalize overview analytics (CTR to Google, response rate).
 
 **Files/components likely involved**
@@ -418,7 +420,7 @@ connected.
 - None (infrastructure).
 
 **Dependencies**
-- Phases 1–11; Vercel + Neon accounts; Sender production token + verified sender.
+- Phases 1–11; Vercel + Neon accounts; Resend production key + verified sender.
 
 **Acceptance criteria**
 - Deployed app serves health, API, review routes, and dashboard over HTTPS.

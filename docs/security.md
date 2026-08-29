@@ -14,7 +14,7 @@ Security design and abuse-prevention for the Review & Feedback System.
 | Dashboard hijacking | Signed httpOnly session cookie, login rate limiting, business scoping |
 | DB leak exposing tokens | Only hashes stored (`token_hash`, `key_hash`) |
 | Customer PII leakage | Emails/phones never in URLs; strict validation; not logged |
-| Sender webhook spoofing | Verify origin (signature/secret or shared token header) |
+| Resend webhook spoofing | Verify Svix signature (`RESEND_WEBHOOK_SECRET`) |
 | SSRF / injection via metadata | JSON-schema validation, length limits, no URL fetching |
 | Brute-forcing the dashboard | Rate-limit login attempts |
 
@@ -123,13 +123,14 @@ user table.
 - Webhook handler must not echo webhook payloads into logs.
 - Data minimization: `orderMetadata` is stored but not displayed by default.
 
-## 9. Sender webhook security (optional)
+## 9. Resend webhook security
 
-- If Sender supports a shared secret/signature on webhooks, verify it. Otherwise require a
-  custom `X-Webhook-Secret` header matching a server-side secret and restrict to Sender's IP
-  range if documented.
-- Reject and return `400` on missing/invalid secret. Respond `200` fast; do heavy work after
-  responding (or keep work trivial).
+- Resend signs webhooks with Svix (`svix-id`, `svix-timestamp`, `svix-signature`). Verify the
+  signature using the `svix` package with `RESEND_WEBHOOK_SECRET` before processing.
+- Webhooks are delivered at-least-once; column updates are guarded (`IS NULL`) so duplicates
+  don't overwrite. Optionally dedup on the `svix-id` header.
+- Reject with `401` on invalid signature. Always ack `200` after processing (Resend retries
+  non-2xx: 5s → 10h).
 
 ## 10. General hardening (release checklist)
 

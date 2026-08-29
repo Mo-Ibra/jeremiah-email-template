@@ -8,7 +8,7 @@ added here so future work stays consistent.
 **Decision:** One Next.js application hosts the API, the review routes, the dashboard, and the
 webhook handlers.
 
-**Why:** MVP scale; the Sender call is the only external dependency and can be awaited inline.
+**Why:** MVP scale; the Resend call is the only external dependency and can be awaited inline.
 Microservices add operational cost without benefit here. If sends later need to survive request
 timeouts, we'd add a queue (see §7) — still within the same app.
 
@@ -53,18 +53,18 @@ queries.
 
 **Decision:** The create route sends the email synchronously before responding.
 
-**Why:** Simplest correct behavior; on Sender failure the row already exists and the business can
+**Why:** Simplest correct behavior; on Resend failure the row already exists and the business can
 retry idempotently (send re-attempted only when `email_sent_at IS NULL`). If latency becomes a
 problem, move the send to a background queue in a later phase.
 
-## 8. Email tracking uses our own routes, Sender webhooks optional
+## 8. Email tracking uses our own routes, Resend webhooks for delivery
 
 **Decision:** Opens are tracked with our 1×1 pixel; star and Google clicks are inherently tracked
-by our routes. Sender account webhooks (a **paid** feature) are optional and only for
-delivered/bounced.
+by our routes. Resend webhooks (free, Svix-signed) cover delivered/bounced.
 
-**Why:** Keeps every event tied to the review token, works without paid features, and avoids
-Sender's link-tracking wrappers on our star links. Delivery/bounce data is nice-to-have.
+**Why:** Keeps every event tied to the review token and avoids redirect wrappers on our star
+links. Resend is a transactional-first provider with free built-in webhooks, which is why we
+chose it over a marketing-focused alternative (see §14).
 
 ## 9. Google review option shown to all ratings (no gating)
 
@@ -108,3 +108,13 @@ a global limiter with minimal setup.
 
 **Why:** The token belongs in the email. Returning it widens the surface for accidental exposure
 and is not needed by the business app.
+
+## 14. Resend over a marketing email platform
+
+**Decision:** Email delivery uses **Resend**, not Sender.net.
+
+**Why:** The system sends transactional review emails, which is Resend's core use case (Sender is
+primarily a marketing platform). Resend also provides webhooks (delivered/bounced) for free with
+Svix signing, whereas Sender's account webhooks are a paid feature. Resend's simple
+`POST /emails` API and first-class SDK keep integration small. Switched before production setup,
+so no migration of live data was required.

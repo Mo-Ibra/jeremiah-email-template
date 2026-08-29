@@ -110,10 +110,10 @@ Core entity: one row per review email sent. Rating, feedback, and email-tracking
 | `google_review_clicked_at` | timestamptz NULL | First Google-link click |
 | `google_review_click_count` | int NOT NULL DEFAULT 0 | Total Google-link clicks |
 | `email_sent_at` | timestamptz NULL | |
-| `email_delivered_at` | timestamptz NULL | From Sender webhook (optional) |
-| `email_bounced_at` | timestamptz NULL | From Sender webhook (optional) |
+| `email_delivered_at` | timestamptz NULL | From Resend webhook (optional) |
+| `email_bounced_at` | timestamptz NULL | From Resend webhook (optional) |
 | `email_opened_at` | timestamptz NULL | From our open-pixel route |
-| `sender_email_id` | text NULL | `emailId` returned by Sender `/message/send` |
+| `sender_email_id` | text NULL | Email id returned by Resend `POST /emails` |
 | `expires_at` | timestamptz NOT NULL | Default `now() + interval '30 days'` |
 | `created_at` | timestamptz NOT NULL | |
 | `updated_at` | timestamptz NOT NULL | |

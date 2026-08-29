@@ -81,7 +81,7 @@ Notes:
 - `details` for `VALIDATION_ERROR` lists field-level problems, e.g.
   `{ "field": "customerEmail", "issue": "Invalid email" }`.
 - The review token is **never** returned to the business app (only the email contains it).
-- The endpoint returns after the Sender send is attempted; a Sender failure returns `500`
+- The endpoint returns after the Resend send is attempted; a Resend failure returns `500`
   with code `EMAIL_SEND_FAILED` but the review request row **is** created (idempotency means a
   retry will attach to the existing row).
 

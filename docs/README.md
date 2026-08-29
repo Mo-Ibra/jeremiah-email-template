@@ -17,7 +17,7 @@ analytics) is handled by this system.
 | Framework | Next.js (App Router) + TypeScript |
 | Database | Neon PostgreSQL (serverless) |
 | ORM / migrations | Drizzle ORM + `drizzle-kit` |
-| Email | Sender (`https://api.sender.net/v2/`) |
+| Email | Resend (`https://api.resend.com`) |
 | Dashboard auth | Static email + password (env-configured), signed httpOnly session cookie |
 | API auth (business → us) | API keys (`Authorization: Bearer <key>`) |
 | Validation | Zod |
@@ -34,7 +34,7 @@ Our Review API (Next.js Route Handler)
         │  insert + token
         ▼
 Neon PostgreSQL
-        │  send via Sender
+        │  send via Resend
         ▼
 Customer email (star links, no JS)
         │  customer clicks a star
@@ -58,7 +58,7 @@ Feedback form  +  Google review link  +  Dashboard
 | [database.md](./database.md) | Schema, tables, indexes, constraints, ERD, seed data |
 | [api.md](./api.md) | API spec for the business integration |
 | [email-flow.md](./email-flow.md) | Email lifecycle, template structure, links |
-| [sender-integration.md](./sender-integration.md) | Sender specifics: API, webhooks, tracking |
+| [resend-integration.md](./resend-integration.md) | Resend specifics: API, webhooks, tracking |
 | [review-flow.md](./review-flow.md) | Rating, feedback, and Google-compliant review flow |
 | [dashboard.md](./dashboard.md) | Dashboard features, queries, filters, sorting |
 | [security.md](./security.md) | Auth, tokens, rate limiting, abuse prevention |
@@ -80,15 +80,16 @@ Feedback form  +  Google review link  +  Dashboard
 | --- | --- |
 | `DATABASE_URL` | Neon Postgres connection string |
 | `PUBLIC_BASE_URL` | App base URL, e.g. `https://reviews.example.com` |
-| `SENDER_API_KEY` | Sender API token (Bearer) |
-| `SENDER_FROM_EMAIL` / `SENDER_FROM_NAME` | Verified sender used in emails |
+| `RESEND_API_KEY` | Resend API key (Bearer, `re_...`) |
+| `RESEND_FROM_EMAIL` / `RESEND_FROM_NAME` | Verified sender used in emails |
+| `RESEND_WEBHOOK_SECRET` | Resend webhook signing secret (Svix) |
 | `DASHBOARD_EMAIL` / `DASHBOARD_PASSWORD` | Static dashboard login credentials |
 | `DASHBOARD_SESSION_SECRET` | Secret for signing the dashboard session cookie |
 | `DASHBOARD_BUSINESS_SLUG` | Business the dashboard operates on (fallback: first business) |
 
 ## MVP principles
 
-- No microservices. One Next.js app + Neon + Sender.
+- No microservices. One Next.js app + Neon + Resend.
 - Business app only needs `POST /api/review-requests` (plus an optional status check).
 - Email must work without JavaScript (plain `<a href>` star links).
 - Google review links are offered to **every** customer who rates; negative ratings are
@@ -100,5 +101,5 @@ Feedback form  +  Google review link  +  Dashboard
 1. Read [architecture.md](./architecture.md) and [requirements.md](./requirements.md) first.
 2. Follow [development-phases.md](./development-phases.md) as the build order.
 3. Use [database.md](./database.md) to create the Neon schema.
-4. Use [api.md](./api.md) and [sender-integration.md](./sender-integration.md) when wiring the
+4. Use [api.md](./api.md) and [resend-integration.md](./resend-integration.md) when wiring the
    business integration and email.
