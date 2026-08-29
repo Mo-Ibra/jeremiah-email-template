@@ -633,3 +633,34 @@ export async function findOrCreateBusiness(opts: {
     .returning()
     .then((r) => r[0]);
 }
+
+// ---------------------------------------------------------------------------
+// getBusiness — fetch a business by id
+// ---------------------------------------------------------------------------
+export async function getBusiness(businessId: string) {
+  return db
+    .select()
+    .from(businesses)
+    .where(eq(businesses.id, businessId))
+    .limit(1)
+    .then((r) => r[0] ?? null);
+}
+
+// ---------------------------------------------------------------------------
+// updateBusiness — update business settings
+// ---------------------------------------------------------------------------
+export async function updateBusiness(
+  businessId: string,
+  data: { name?: string; googleReviewUrl?: string | null },
+) {
+  const sets: Record<string, unknown> = { updatedAt: new Date() };
+  if (data.name !== undefined) sets.name = data.name;
+  if (data.googleReviewUrl !== undefined) sets.googleReviewUrl = data.googleReviewUrl;
+
+  return db
+    .update(businesses)
+    .set(sets)
+    .where(eq(businesses.id, businessId))
+    .returning()
+    .then((r) => r[0] ?? null);
+}

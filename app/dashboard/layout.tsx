@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSessionFromRequest } from "@/lib/auth/session";
-import { LayoutDashboard, Mail } from "lucide-react";
+import { LayoutDashboard, Mail, Settings } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,7 @@ async function getSession() {
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/requests", label: "Review Requests", icon: Mail },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export default async function DashboardLayout({
