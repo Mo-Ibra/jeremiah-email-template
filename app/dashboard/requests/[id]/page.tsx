@@ -14,7 +14,6 @@ import {
   MessageSquare,
   ExternalLink,
   CheckCircle2,
-  XCircle,
   User,
 } from "lucide-react";
 
@@ -192,24 +191,13 @@ export default async function RequestDetailPage({
             time={r.emailOpenedAt}
           />
           <TimelineItem
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            label="Delivered"
-            time={r.emailDeliveredAt}
-          />
-          <TimelineItem
-            icon={<XCircle className="h-4 w-4" />}
-            label="Bounced"
-            time={r.emailBouncedAt}
-            danger
-          />
-          <TimelineItem
             icon={<MessageSquare className="h-4 w-4" />}
             label="Feedback submitted"
             time={r.feedbackSubmittedAt}
           />
           <TimelineItem
             icon={<ExternalLink className="h-4 w-4" />}
-            label="Google review clicked"
+            label="Redirected to Google review"
             time={r.googleReviewClickedAt}
             extra={
               r.googleReviewClickCount > 0
