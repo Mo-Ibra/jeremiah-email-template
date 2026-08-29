@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Send } from "lucide-react";
 
 export function TestEmailForm() {
   const [name, setName] = useState("");
@@ -38,6 +38,7 @@ export function TestEmailForm() {
           message: `Email sent to ${data.to}. Check your inbox!`,
         });
         setEmail("");
+        setName("");
       } else {
         setResult({
           status: "error",
@@ -57,7 +58,7 @@ export function TestEmailForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="flex-1"
+          className="flex-1 h-10 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-violet-500/20 focus-visible:border-violet-500"
         />
         <Input
           placeholder="Customer email"
@@ -65,16 +66,20 @@ export function TestEmailForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="flex-1"
+          className="flex-1 h-10 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-violet-500/20 focus-visible:border-violet-500"
         />
         <Button
           type="submit"
           disabled={!name.trim() || !email.trim() || result?.status === "sending"}
+          className="h-10 px-5 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white shadow-sm font-medium"
         >
           {result?.status === "sending" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            "Send"
+            <>
+              <Send className="h-4 w-4 mr-1.5" />
+              Send
+            </>
           )}
         </Button>
       </div>
@@ -84,8 +89,8 @@ export function TestEmailForm() {
           variant={result.status === "error" ? "destructive" : "default"}
           className={
             result.status === "sent"
-              ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
-              : ""
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+              : "border-zinc-200 dark:border-zinc-700"
           }
         >
           {result.status === "sent" ? (
@@ -93,7 +98,9 @@ export function TestEmailForm() {
           ) : (
             <AlertCircle className="h-4 w-4" />
           )}
-          <AlertDescription>{result.message}</AlertDescription>
+          <AlertDescription className="text-sm">
+            {result.message}
+          </AlertDescription>
         </Alert>
       )}
     </form>
