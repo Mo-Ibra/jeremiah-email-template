@@ -67,7 +67,7 @@ Feedback form  +  Google review link  +  Dashboard
 
 ## Key conventions used throughout these docs
 
-- **Placeholder domain:** `https://reviews.example.com` (set via `PUBLIC_BASE_URL`).
+- **Placeholder domain:** `https://reviews.example.com` (set via `APP_BASE_URL`).
 - **API key format:** `rqk_<43-char random>` (only a SHA-256 hash is stored).
 - **Review token:** 32 random bytes, base64url-encoded; only the SHA-256 hash is stored.
 - **Review link:** `https://reviews.example.com/r/<token>?rating=1..5`
@@ -79,7 +79,7 @@ Feedback form  +  Google review link  +  Dashboard
 | Var | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Neon Postgres connection string |
-| `PUBLIC_BASE_URL` | App base URL, e.g. `https://reviews.example.com` |
+| `APP_BASE_URL` | App base URL, e.g. `https://reviews.example.com` |
 | `RESEND_API_KEY` | Resend API key (Bearer, `re_...`) |
 | `RESEND_FROM_EMAIL` / `RESEND_FROM_NAME` | Verified sender used in emails |
 | `RESEND_WEBHOOK_SECRET` | Resend webhook signing secret (Svix) |

@@ -30,7 +30,7 @@ export function renderReviewEmail({
   customerName,
   businessName,
 }: RenderReviewEmailInput): RenderedReviewEmail {
-  const base = (process.env.PUBLIC_BASE_URL ?? "http://localhost:3000").replace(
+  const base = (process.env.APP_BASE_URL ?? "http://localhost:3000").replace(
     /\/$/,
     "",
   );
