@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { LayoutDashboard, Mail, Settings, Star } from "lucide-react";
+import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  if (!session) redirect("/dashboard/login");
+  if (!session) redirect("/login");
 
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -57,8 +58,8 @@ export default async function DashboardLayout({
             </Link>
           ))}
         </nav>
-        <div className="px-4 py-4 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-3">
+        <div className="px-3 py-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+          <div className="flex items-center gap-3 px-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xs font-semibold text-white shadow-sm">
               {session.email.charAt(0).toUpperCase()}
             </div>
@@ -71,6 +72,7 @@ export default async function DashboardLayout({
               </p>
             </div>
           </div>
+          <LogoutButton />
         </div>
       </aside>
 

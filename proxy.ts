@@ -5,11 +5,11 @@ import { getSessionFromRequest } from "@/lib/auth/session";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect /dashboard/** but NOT /dashboard/login
-  if (pathname.startsWith("/dashboard") && pathname !== "/dashboard/login") {
+  // Protect /dashboard/** — redirect unauthenticated users to /login
+  if (pathname.startsWith("/dashboard")) {
     const session = getSessionFromRequest(request);
     if (!session) {
-      const loginUrl = new URL("/dashboard/login", request.url);
+      const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }

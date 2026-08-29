@@ -49,7 +49,7 @@ export default async function RequestDetailPage({
 }) {
   const { id } = await params;
   const businessId = await getBusinessId();
-  if (!businessId) redirect("/dashboard/login");
+  if (!businessId) redirect("/login");
 
   const result = await getRequest(id);
   if (!result || result.request.businessId !== businessId) notFound();

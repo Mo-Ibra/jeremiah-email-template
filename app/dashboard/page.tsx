@@ -65,7 +65,7 @@ const statIcons: Record<string, React.ReactNode> = {
 
 export default async function DashboardOverview() {
   const businessId = await getBusinessId();
-  if (!businessId) redirect("/dashboard/login");
+  if (!businessId) redirect("/login");
 
   const [m, recent] = await Promise.all([
     metrics(businessId),

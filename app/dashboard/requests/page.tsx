@@ -55,7 +55,7 @@ export default async function RequestsPage({
   searchParams: Promise<{ status?: string; search?: string; page?: string }>;
 }) {
   const businessId = await getBusinessId();
-  if (!businessId) redirect("/dashboard/login");
+  if (!businessId) redirect("/login");
 
   const params = await searchParams;
   const filters: ListFilters = { perPage: 20, sort: "newest" };
